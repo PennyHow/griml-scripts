@@ -7,5 +7,5 @@ For running the GrIML processing workflow, plus add-ons.
 ## lake_temperature
 For handling lake surface temperature estimates in relation to inventory classifications.
 
-# plts
+## plts
 Plots and data visualisations from the inventory series.
