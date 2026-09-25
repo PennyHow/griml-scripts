@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
 # %%
-workspace1 = '/home/pho/python_workspace/GrIML/misc/iml_2016-2023/final/with_lake_temps/*IML-fv1.shp'
+workspace1 = '/home/pho/python_workspace/GrIML/misc/iml_2016-2023/final/fv3_with_merged_auto_classes_and_manual_classes/*01-ESA-GRIML-IML-fv3.gpkg'
 out_dir = '/home/pho/python_workspace/GrIML/misc/iml_2016-2023/stats/'
 
 geofiles=[]
@@ -22,7 +22,7 @@ for f in list(sorted(glob.glob(workspace1))):
 
 # %%
 fsize1 = 14
-fsize2 = 13
+fsize2 = 12
 fsize3 = 10
 fsize4 = 8
 fsty = 'arial'
@@ -37,17 +37,17 @@ methods = ['ARCTICDEM', 'S1', 'S2']
 #--------------------------------
 
 fig = plt.figure(constrained_layout=False, figsize=(10,13))
-gs1 = fig.add_gridspec(nrows=2, ncols=1, left=0.08, right=0.9 , top=0.95,
-                       bottom=0.54, wspace=0.05, hspace=0.0, height_ratios=[4,1])
-ax1 = fig.add_subplot(gs1[:-1, :])
-ax2 = fig.add_subplot(gs1[-1, -1], sharex=ax1)
+gs1 = fig.add_gridspec(nrows=3, ncols=1, left=0.08, right=0.9 , top=0.95,
+                       bottom=0.54, wspace=0.05, hspace=0.0, height_ratios=[4,1,1])
+ax1 = fig.add_subplot(gs1[0, :])
+ax5 = fig.add_subplot(gs1[1, :], sharex=ax1)
+ax2 = fig.add_subplot(gs1[2, :], sharex=ax1)
 
-
-gs2 = fig.add_gridspec(nrows=2, ncols=1, left=0.08, right=0.9, top=0.46,
-                       bottom=0.05, wspace=0.05, hspace=0.0,height_ratios=[4,1])
-ax3 = fig.add_subplot(gs2[:-1, :])
-ax4 = fig.add_subplot(gs2[-1, -1], sharex=ax3)
-
+gs2 = fig.add_gridspec(nrows=3, ncols=1, left=0.08, right=0.9, top=0.46,
+                       bottom=0.05, wspace=0.05, hspace=0.0,height_ratios=[4,1,1])
+ax3 = fig.add_subplot(gs2[0, :])
+ax6 = fig.add_subplot(gs2[1, :], sharex=ax3)
+ax4 = fig.add_subplot(gs2[2, :], sharex=ax3)
 
 is_nw=[]
 is_no=[]
@@ -107,6 +107,22 @@ ic_se=[]
 ic_sw=[]
 ic_cw=[]
 ice_cap_area = [ic_nw, ic_no, ic_ne, ic_ce, ic_se, ic_sw, ic_cw]
+is_nw1=[]
+is_no1=[]
+is_ne1=[]
+is_ce1=[]
+is_se1=[]
+is_sw1=[]
+is_cw1=[]
+ice_sheet_total = [is_nw1, is_no1, is_ne1, is_ce1, is_se1, is_sw1, is_cw1]
+ic_nw1=[]
+ic_no1=[]
+ic_ne1=[]
+ic_ce1=[]
+ic_se1=[]
+ic_sw1=[]
+ic_cw1=[]
+ice_cap_total = [ic_nw1, ic_no1, ic_ne1, ic_ce1, ic_se1, ic_sw1, ic_cw1]
 for g in geofiles:
     f = g[g['method'] != 'DEM']
     f = f.dissolve(by='lake_id')
@@ -119,15 +135,24 @@ for g in geofiles:
     
     for i in range(len(b)):
         isheet = i1[i1['region'] == b[i]]
-        ice_sheet_area[i].append(np.average(isheet.area_sqkm))
+        ice_sheet_area[i].append(np.median(isheet.area_sqkm))
+        ice_sheet_total[i].append(sum(isheet.area_sqkm))
         icap = i2[i2['region'] == b[i]]
-        ice_cap_area[i].append(np.average(icap.area_sqkm))
+        ice_cap_area[i].append(np.median(icap.area_sqkm))
+        ice_cap_total[i].append(sum(icap.area_sqkm))
 
 for i in range(len(b)):
+    print('\nIce Sheet lakes ' + b[i])
+    print('Median: ' + str(ice_sheet_area[i]))
+    print('Total: ' + str(ice_sheet_total[i]))
     ax2.plot(years, ice_sheet_area[i], c=c1[i], label=b[i])
-
+    ax5.plot(years, ice_sheet_total[i], c=c1[i], label=b[i])
 for i in range(len(b)):
+    print('\nPGIC lakes ' + b[i])
+    print('Median: ' + str(ice_cap_area[i]))
+    print('Total: ' + str(ice_cap_total[i]))
     ax4.plot(years, ice_cap_area[i], c=c2[i], label=b[i])
+    ax6.plot(years, ice_cap_total[i], c=c2[i], label=b[i])
 
 props = dict(boxstyle='round', facecolor='#6CB0D6', alpha=0.3)
 for a in [ax1,ax3]:
@@ -135,37 +160,54 @@ for a in [ax1,ax3]:
     handles, labels = a.get_legend_handles_labels()
     a.legend(handles[::-1], labels[::-1], bbox_to_anchor=(1.01,0.5))
 
-for a in [ax1,ax2,ax3,ax4]:
+for a in [ax1,ax2,ax3,ax4,ax5,ax6]:
     a.set_axisbelow(True)
     a.yaxis.grid(color='gray', linestyle='dashed', linewidth=0.5)
     a.set_facecolor("#f2f2f2")
 
 ax1.text(0.01, 1.05, 'Ice Sheet lake change', fontsize=fsize1, 
          horizontalalignment='left', bbox=props, transform=ax1.transAxes)
-ax3.text(0.01, 1.05, 'Periphery ice caps/glaciers lake change', 
+ax3.text(0.01, 1.05, 'Periphery glaciers/ice caps (PGIC) lake change',
          fontsize=fsize1, horizontalalignment='left', bbox=props, transform=ax3.transAxes)
 
-fig.text(0.5, 0.018, 'Year', ha='center', fontsize=fsize1)
-fig.text(0.5, 0.51, 'Year', ha='center', fontsize=fsize1)
+fig.text(0.5, 0.018, 'Year', ha='center', fontsize=fsize2)
+fig.text(0.5, 0.51, 'Year', ha='center', fontsize=fsize2)
 
-fig.text(0.02, 0.74, 'Lake abundance', ha='center', 
+fig.text(0.02, 0.76, 'Lake abundance', ha='center',
          rotation='vertical', fontsize=fsize2)
-fig.text(0.02, 0.27, 'Lake abundance', ha='center', 
+fig.text(0.02, 0.27, 'Lake abundance', ha='center',
          rotation='vertical', fontsize=fsize2)
 
-fig.text(0.02, 0.52, r'Average lake area (km$^2$)', ha='center',
+fig.text(0.012, 0.645, 'Total area', ha='center', va='center',
          rotation='vertical', fontsize=fsize2)
-fig.text(0.02, 0.03, r'Average lake area (km$^2$)', ha='center',
+fig.text(0.028, 0.645, r'(km$^2$)', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+fig.text(0.012, 0.155, 'Total area', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+fig.text(0.028, 0.155, r'(km$^2$)', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+
+fig.text(0.012, 0.565, 'Median area', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+fig.text(0.028, 0.565, r'(km$^2$)', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+fig.text(0.012, 0.075, 'Median area', ha='center', va='center',
+         rotation='vertical', fontsize=fsize2)
+fig.text(0.028, 0.075, r'(km$^2$)', ha='center', va='center',
          rotation='vertical', fontsize=fsize2)
 
 fig.text(0.016, 0.96, 'a.', ha='left', fontsize=fsize1+4)
 fig.text(0.016, 0.47, 'b.', ha='left', fontsize=fsize1+4)
 
-ax2.set_yticks([0,1.0,2.0,3.0])
-ax2.set_yticklabels(['0.0','1.0','2.0', ''])
-ax4.set_yticks([0,1.0,2.0,3.0])
-ax4.set_yticklabels(['0.0','1.0','2.0', ''])
+ax2.set_yticks([0.0,0.25,0.5,0.75])
+ax2.set_yticklabels(['0.0','0.25','0.50', ''])
+ax4.set_yticks([0.0,0.25,0.5,0.75])
+ax4.set_yticklabels(['0.0','0.25','0.50', ''])
 
+ax5.set_yticks([0,300,600,900])
+ax5.set_yticklabels(['0','300','600', ''])
+ax6.set_yticks([0,100,200,300])
+ax6.set_yticklabels(['0','100','200', ''])
 
 # fig.tight_layout(pad=3.0)
 # plt.subplots_adjust(wspace=0, hspace=0)
